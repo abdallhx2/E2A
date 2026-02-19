@@ -10,9 +10,21 @@ from routes import youtube, upload
 from config import settings
 
 
+def _write_cookies_file() -> None:
+    """Decode COOKIES_BASE64 env var to a file if no COOKIES_FILE is set."""
+    if settings.COOKIES_FILE or not settings.COOKIES_BASE64:
+        return
+    import base64
+    path = os.path.join(settings.TEMP_DIR, "cookies.txt")
+    with open(path, "wb") as f:
+        f.write(base64.b64decode(settings.COOKIES_BASE64))
+    settings.COOKIES_FILE = path
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     os.makedirs(settings.TEMP_DIR, exist_ok=True)
+    _write_cookies_file()
     task = asyncio.create_task(cleanup_loop())
     yield
     task.cancel()
