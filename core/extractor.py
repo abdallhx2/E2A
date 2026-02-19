@@ -40,9 +40,17 @@ async def extract_youtube(job_id: str, url: str, start_sec=None, end_sec=None) -
         str(url),
     ]
 
+    clip = settings.AUDIO_CLIP_SECONDS
     if start_sec is not None or end_sec is not None:
-        section = f"*{start_sec or 0}-{end_sec or 'inf'}"
-        cmd += ["--download-sections", section]
+        s = start_sec or 0
+        e = end_sec or "inf"
+        if clip and e == "inf":
+            e = s + clip
+        elif clip and isinstance(e, (int, float)):
+            e = min(e, s + clip)
+        cmd += ["--download-sections", f"*{s}-{e}"]
+    elif clip:
+        cmd += ["--download-sections", f"*0-{clip}"]
 
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -80,8 +88,10 @@ async def extract_video_file(job_id: str, input_path: str) -> None:
     update_job(job_id, status=JobStatus.processing)
     output_path = Path(settings.TEMP_DIR) / f"{job_id}.{settings.AUDIO_FORMAT}"
 
+    clip_args = ["-t", str(settings.AUDIO_CLIP_SECONDS)] if settings.AUDIO_CLIP_SECONDS else []
     cmd = [
         _resolve_bin("ffmpeg"), "-i", input_path,
+        *clip_args,
         "-vn",
         "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
         "-acodec", "libmp3lame",

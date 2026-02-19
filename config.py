@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     JOB_TTL_SECONDS: int = 3600         # حذف الوظيفة والملف بعد ساعة
     AUDIO_FORMAT: str = "mp3"
     AUDIO_QUALITY: str = "128k"
+    AUDIO_CLIP_SECONDS: int = 30        # 0 = no limit
 
     model_config = {"env_file": ".env"}
 
