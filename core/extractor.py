@@ -8,14 +8,16 @@ from core.job_store import update_job
 from models import JobStatus
 
 
-def _resolve_bin(name: str) -> str:
-    """Find binary: prefer venv Scripts dir, then PATH."""
-    venv_bin = Path(sys.executable).parent / (name + (".exe" if sys.platform == "win32" else ""))
-    if venv_bin.exists():
-        return str(venv_bin)
+_PYTHON_PACKAGES = {"yt-dlp": "yt_dlp"}
+
+
+def _resolve_bin(name: str) -> list[str]:
+    """Find binary: python -m for Python packages, PATH for system binaries."""
+    if name in _PYTHON_PACKAGES:
+        return [sys.executable, "-m", _PYTHON_PACKAGES[name]]
     found = shutil.which(name)
     if found:
-        return found
+        return [found]
     raise FileNotFoundError(f"'{name}' not found. Install it or add to PATH.")
 
 
@@ -26,19 +28,24 @@ async def extract_youtube(job_id: str, url: str, start_sec=None, end_sec=None) -
     update_job(job_id, status=JobStatus.processing)
 
     cmd = [
-        _resolve_bin("yt-dlp"),
+        *_resolve_bin("yt-dlp"),
         "--extract-audio",
         "--audio-format", settings.AUDIO_FORMAT,
         "--audio-quality", settings.AUDIO_QUALITY,
         "--max-filesize", f"{settings.MAX_FILE_SIZE_MB}m",
         "--match-filter", f"duration <= {settings.MAX_DURATION_SECONDS}",
         "--no-playlist",
-        "--extractor-args", "youtube:player_client=android",
         "--output", str(output_path),
         "--print", "title",
         "--no-simulate",          # --print implies --simulate by default; override it
-        str(url),
     ]
+
+    if settings.COOKIES_FILE:
+        cmd += ["--cookies", settings.COOKIES_FILE]
+    if settings.PROXY:
+        cmd += ["--proxy", settings.PROXY]
+
+    cmd.append(str(url))
 
     clip = settings.AUDIO_CLIP_SECONDS
     if start_sec is not None or end_sec is not None:
@@ -90,7 +97,7 @@ async def extract_video_file(job_id: str, input_path: str) -> None:
 
     clip_args = ["-t", str(settings.AUDIO_CLIP_SECONDS)] if settings.AUDIO_CLIP_SECONDS else []
     cmd = [
-        _resolve_bin("ffmpeg"), "-i", input_path,
+        *_resolve_bin("ffmpeg"), "-i", input_path,
         *clip_args,
         "-vn",
         "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
@@ -129,7 +136,7 @@ async def extract_video_file(job_id: str, input_path: str) -> None:
 async def _get_duration(file_path: Path) -> float | None:
     try:
         proc = await asyncio.create_subprocess_exec(
-            _resolve_bin("ffprobe"), "-v", "error",
+            *_resolve_bin("ffprobe"), "-v", "error",
             "-show_entries", "format=duration",
             "-of", "default=noprint_wrappers=1:nokey=1",
             str(file_path),
