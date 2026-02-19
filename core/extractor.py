@@ -38,6 +38,7 @@ async def extract_youtube(job_id: str, url: str, start_sec=None, end_sec=None) -
         "--output", str(output_path),
         "--print", "title",
         "--no-simulate",          # --print implies --simulate by default; override it
+        "--remote-components", "ejs:github",
     ]
 
     if settings.COOKIES_FILE:
