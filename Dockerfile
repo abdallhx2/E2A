@@ -9,11 +9,13 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Clone bgutil PO token server and install deps with npm (canvas 3.x has prebuilt binaries)
+# Clone bgutil PO token server, install deps, compile TypeScript
 RUN git clone --single-branch --branch 1.2.2 \
     https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git /app/pot-server && \
     cd /app/pot-server/server && \
-    npm ci --omit=dev --no-audit --no-fund
+    npm ci --no-audit --no-fund && \
+    npx tsc && \
+    npm prune --production
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt && \
@@ -22,7 +24,6 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 
 COPY . .
 
-# Fix CRLF line endings from Windows
 RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 
 EXPOSE 8000
