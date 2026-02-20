@@ -1,14 +1,17 @@
 #!/bin/bash
 
-# Start bgutil PO token server in background on port 4416
-# (must override PORT env var that Render sets to 8000)
+# Start bgutil PO token server in a subshell with PORT unset
+# (Render sets PORT=8000 which Express reads, causing port conflict)
 echo "[entrypoint] Starting PO token server on port 4416..."
-cd /app/pot-server/server
-PORT=4416 deno run --allow-env --allow-net \
-  --allow-ffi=/app/pot-server/server/node_modules \
-  --allow-read=/app/pot-server/server/node_modules \
-  --unstable-bare-node-builtins \
-  /app/pot-server/server/src/main.ts --port 4416 > /app/pot-server-startup.log 2>&1 &
+(
+  unset PORT
+  cd /app/pot-server/server
+  exec deno run --allow-env --allow-net \
+    --allow-ffi=/app/pot-server/server/node_modules \
+    --allow-read=/app/pot-server/server/node_modules \
+    --unstable-bare-node-builtins \
+    /app/pot-server/server/src/main.ts --port 4416
+) > /app/pot-server-startup.log 2>&1 &
 POT_PID=$!
 
 sleep 5
