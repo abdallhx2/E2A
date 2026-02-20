@@ -75,3 +75,46 @@ async def download_audio(job_id: str) -> FileResponse:
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
+
+
+@app.get("/debug/pot")
+async def debug_pot() -> dict:
+    """Diagnostic: check PO token server and yt-dlp plugins."""
+    import subprocess, httpx
+    info = {}
+
+    # Check yt-dlp version
+    try:
+        r = subprocess.run(["python", "-m", "yt_dlp", "--version"], capture_output=True, text=True)
+        info["ytdlp_version"] = r.stdout.strip()
+    except Exception as e:
+        info["ytdlp_version"] = str(e)
+
+    # List yt-dlp plugins
+    try:
+        r = subprocess.run(
+            ["python", "-c", "import yt_dlp; yd = yt_dlp.YoutubeDL({'quiet': True}); print([p.name for p in yd._plugin_dirs.get('extractors', [])])"],
+            capture_output=True, text=True, timeout=10,
+        )
+        info["ytdlp_plugins_stdout"] = r.stdout.strip()
+        info["ytdlp_plugins_stderr"] = r.stderr.strip()[:500] if r.stderr else ""
+    except Exception as e:
+        info["ytdlp_plugins"] = str(e)
+
+    # Check PO token server on port 4416
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get("http://127.0.0.1:4416/", timeout=5)
+            info["pot_server"] = {"status": resp.status_code, "body": resp.text[:200]}
+    except Exception as e:
+        info["pot_server"] = {"error": str(e)}
+
+    # Check if bgutil plugin is importable
+    try:
+        import importlib
+        mod = importlib.import_module("bgutil_ytdlp_pot_provider")
+        info["bgutil_plugin"] = {"installed": True, "path": str(mod.__file__) if hasattr(mod, '__file__') else "unknown"}
+    except ImportError as e:
+        info["bgutil_plugin"] = {"installed": False, "error": str(e)}
+
+    return info
