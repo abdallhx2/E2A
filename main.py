@@ -137,4 +137,31 @@ async def debug_pot() -> dict:
     except Exception as e:
         info["processes"] = str(e)
 
+    # Try starting PO token server and capture error
+    try:
+        r = subprocess.run(
+            ["deno", "run", "--allow-env", "--allow-net",
+             "--allow-ffi=/app/pot-server/server/node_modules",
+             "--allow-read=/app/pot-server/server/node_modules",
+             "/app/pot-server/server/src/main.ts"],
+            capture_output=True, text=True, timeout=15,
+            cwd="/app/pot-server/server",
+        )
+        info["pot_start_attempt"] = {
+            "returncode": r.returncode,
+            "stdout": r.stdout[:500],
+            "stderr": r.stderr[:500],
+        }
+    except subprocess.TimeoutExpired:
+        info["pot_start_attempt"] = "Server started (still running after 15s = good)"
+    except Exception as e:
+        info["pot_start_attempt"] = str(e)
+
+    # Check entrypoint log
+    try:
+        r = subprocess.run(["cat", "/app/pot-server-startup.log"], capture_output=True, text=True, timeout=5)
+        info["startup_log"] = r.stdout[:500] if r.stdout else r.stderr[:200]
+    except Exception as e:
+        info["startup_log"] = str(e)
+
     return info
