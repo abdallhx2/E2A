@@ -1,11 +1,23 @@
 #!/bin/bash
 
-# Start bgutil PO token server in background (generates YouTube bot-bypass tokens)
-cd /app/pot-server/server/node_modules && \
-  deno run --allow-env --allow-net --allow-ffi=. --allow-read=. ../src/main.ts &
+# Start bgutil PO token server in background (port 4416)
+echo "[entrypoint] Starting PO token server..."
+cd /app/pot-server/server
+deno run --allow-env --allow-net \
+  --allow-ffi=/app/pot-server/server/node_modules \
+  --allow-read=/app/pot-server/server/node_modules \
+  /app/pot-server/server/src/main.ts &
+POT_PID=$!
 
-# Wait a moment for the token server to initialize
-sleep 3
+# Wait for server to initialize
+sleep 5
+
+# Check if PO token server is alive
+if kill -0 $POT_PID 2>/dev/null; then
+  echo "[entrypoint] PO token server started (PID $POT_PID)"
+else
+  echo "[entrypoint] WARNING: PO token server failed to start"
+fi
 
 # Start the main application
 cd /app
