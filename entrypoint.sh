@@ -1,13 +1,14 @@
 #!/bin/bash
 
-# Start bgutil PO token server in background (port 4416)
-echo "[entrypoint] Starting PO token server..."
+# Start bgutil PO token server in background on port 4416
+# (must override PORT env var that Render sets to 8000)
+echo "[entrypoint] Starting PO token server on port 4416..."
 cd /app/pot-server/server
-deno run --allow-env --allow-net \
+PORT=4416 deno run --allow-env --allow-net \
   --allow-ffi=/app/pot-server/server/node_modules \
   --allow-read=/app/pot-server/server/node_modules \
   --unstable-bare-node-builtins \
-  /app/pot-server/server/src/main.ts > /app/pot-server-startup.log 2>&1 &
+  /app/pot-server/server/src/main.ts --port 4416 > /app/pot-server-startup.log 2>&1 &
 POT_PID=$!
 
 sleep 5
