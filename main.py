@@ -117,4 +117,24 @@ async def debug_pot() -> dict:
     except ImportError as e:
         info["bgutil_plugin"] = {"installed": False, "error": str(e)}
 
+    # Check deno availability
+    try:
+        r = subprocess.run(["deno", "--version"], capture_output=True, text=True, timeout=5)
+        info["deno_version"] = r.stdout.strip().split("\n")[0] if r.stdout else r.stderr.strip()[:200]
+    except Exception as e:
+        info["deno_version"] = str(e)
+
+    # Check pot-server files exist
+    info["pot_server_files"] = {
+        "main_ts": os.path.exists("/app/pot-server/server/src/main.ts"),
+        "node_modules": os.path.exists("/app/pot-server/server/node_modules"),
+    }
+
+    # Check running processes
+    try:
+        r = subprocess.run(["ps", "aux"], capture_output=True, text=True, timeout=5)
+        info["processes"] = [l for l in r.stdout.split("\n") if "deno" in l.lower() or "pot" in l.lower() or "main.ts" in l.lower()]
+    except Exception as e:
+        info["processes"] = str(e)
+
     return info
