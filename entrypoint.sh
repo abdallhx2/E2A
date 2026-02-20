@@ -6,6 +6,7 @@ cd /app/pot-server/server
 deno run --allow-env --allow-net \
   --allow-ffi=/app/pot-server/server/node_modules \
   --allow-read=/app/pot-server/server/node_modules \
+  --unstable-bare-node-builtins \
   /app/pot-server/server/src/main.ts > /app/pot-server-startup.log 2>&1 &
 POT_PID=$!
 

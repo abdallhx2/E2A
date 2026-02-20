@@ -143,6 +143,7 @@ async def debug_pot() -> dict:
             ["deno", "run", "--allow-env", "--allow-net",
              "--allow-ffi=/app/pot-server/server/node_modules",
              "--allow-read=/app/pot-server/server/node_modules",
+             "--unstable-bare-node-builtins",
              "/app/pot-server/server/src/main.ts"],
             capture_output=True, text=True, timeout=15,
             cwd="/app/pot-server/server",
