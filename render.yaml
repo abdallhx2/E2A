@@ -11,7 +11,5 @@ services:
         value: /tmp/audio_jobs
       - key: AUDIO_CLIP_SECONDS
         value: "30"
-      - key: COOKIES_BASE64
-        sync: false
       - key: PROXY
         sync: false
