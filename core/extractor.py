@@ -39,9 +39,10 @@ async def extract_youtube(job_id: str, url: str, start_sec=None, end_sec=None) -
         "--print", "title",
         "--no-simulate",          # --print implies --simulate by default; override it
         "--remote-components", "ejs:github",
+        "--extractor-args", "youtube:player_client=default,mweb",
     ]
 
-    if settings.COOKIES_FILE:
+    if settings.COOKIES_FILE and os.path.exists(settings.COOKIES_FILE):
         cmd += ["--cookies", settings.COOKIES_FILE]
     if settings.PROXY:
         cmd += ["--proxy", settings.PROXY]

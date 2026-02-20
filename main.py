@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from core.cleanup import cleanup_loop
 from core.job_store import get_job
 from models import JobResponse, JobStatus
-from routes import youtube, upload
+from routes import youtube, upload, admin
 from config import settings
 
 
@@ -39,6 +39,7 @@ app = FastAPI(
 
 app.include_router(youtube.router)
 app.include_router(upload.router)
+app.include_router(admin.router)
 
 
 @app.get("/jobs/{job_id}", response_model=JobResponse)
