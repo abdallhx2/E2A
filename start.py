@@ -4,11 +4,13 @@ import subprocess
 import sys
 import time
 
-# Force PORT=4416 for bgutil, removing Render's PORT=8000
-pot_env = {k: v for k, v in os.environ.items() if k != "PORT"}
-pot_env["PORT"] = "4416"
+# Render sets PORT dynamically - uvicorn must use it
+render_port = os.environ.get("PORT", "8000")
 
-print("[start] Launching PO token server on port 4416...")
+# Start bgutil on fixed port 4416, stripping Render's PORT
+pot_env = {k: v for k, v in os.environ.items() if k != "PORT"}
+
+print(f"[start] Render PORT={render_port}, launching PO token server on 4416...")
 pot_proc = subprocess.Popen(
     ["node", "/app/pot-server/server/build/main.js", "--port", "4416"],
     env=pot_env,
@@ -25,8 +27,8 @@ else:
     with open("/app/pot-server-startup.log") as f:
         print(f.read()[:500])
 
-print("[start] Starting uvicorn...")
+print(f"[start] Starting uvicorn on port {render_port}...")
 os.execvp(
     sys.executable,
-    [sys.executable, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"],
+    [sys.executable, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", render_port],
 )
