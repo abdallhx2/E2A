@@ -39,7 +39,6 @@ async def extract_youtube(job_id: str, url: str, start_sec=None, end_sec=None) -
         "--print", "title",
         "--no-simulate",          # --print implies --simulate by default; override it
         "--remote-components", "ejs:github",
-        "--verbose",
     ]
 
     if settings.COOKIES_FILE and os.path.exists(settings.COOKIES_FILE):
@@ -70,7 +69,7 @@ async def extract_youtube(job_id: str, url: str, start_sec=None, end_sec=None) -
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=300)
 
         if proc.returncode != 0:
-            raise RuntimeError(stderr.decode("utf-8", errors="replace")[:4000])
+            raise RuntimeError(stderr.decode("utf-8", errors="replace")[:500])
 
         final_path = Path(settings.TEMP_DIR) / f"{job_id}.{settings.AUDIO_FORMAT}"
         # yt-dlp prints title first, then may print other lines — take first non-empty line
