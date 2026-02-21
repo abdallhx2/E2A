@@ -104,8 +104,16 @@ async def debug_pot() -> dict:
     # Check PO token server on port 4416
     try:
         async with httpx.AsyncClient() as client:
-            resp = await client.get("http://127.0.0.1:4416/", timeout=5)
-            info["pot_server"] = {"status": resp.status_code, "body": resp.text[:200]}
+            # Ping
+            resp = await client.get("http://127.0.0.1:4416/ping", timeout=5)
+            info["pot_server_ping"] = resp.json() if resp.status_code == 200 else resp.text[:200]
+            # Try generating a PO token
+            resp2 = await client.post(
+                "http://127.0.0.1:4416/get_pot",
+                json={"visitor_data": "", "data_sync_id": "", "player_url": ""},
+                timeout=30,
+            )
+            info["pot_server_get_pot"] = {"status": resp2.status_code, "body": resp2.text[:300]}
     except Exception as e:
         info["pot_server"] = {"error": str(e)}
 
