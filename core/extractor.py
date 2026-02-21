@@ -70,7 +70,7 @@ async def extract_youtube(job_id: str, url: str, start_sec=None, end_sec=None) -
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=300)
 
         if proc.returncode != 0:
-            raise RuntimeError(stderr.decode("utf-8", errors="replace")[:2000])
+            raise RuntimeError(stderr.decode("utf-8", errors="replace")[:4000])
 
         final_path = Path(settings.TEMP_DIR) / f"{job_id}.{settings.AUDIO_FORMAT}"
         # yt-dlp prints title first, then may print other lines — take first non-empty line
